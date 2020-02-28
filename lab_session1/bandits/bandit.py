@@ -99,6 +99,7 @@ class KBandit(Bandit):
                 final = temp
         return final
 
+
     def best_option(self, i) -> bool:
         index_best = 0
         mean_best = self.Bandits[0].mean
