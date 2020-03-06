@@ -14,7 +14,9 @@
 
 import mdp, util
 import numpy as np
+from mdp import MarkovDecisionProcess
 from learningAgents import ValueEstimationAgent
+
 
 class ValueIterationAgent(ValueEstimationAgent):
     """
@@ -25,7 +27,8 @@ class ValueIterationAgent(ValueEstimationAgent):
         for a given number of iterations using the supplied
         discount factor.
     """
-    def __init__(self, mdp, discount = 0.9, iterations = 100):
+
+    def __init__(self, mdp: MarkovDecisionProcess, discount=0.9, iterations=100):
         """
           Your value iteration agent should take an mdp on
           construction, run the indicated number of iterations
@@ -41,12 +44,24 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.mdp = mdp
         self.discount = discount
         self.iterations = iterations
-        self.values = util.Counter() # A Counter is a dict with default 0
+        self.values = util.Counter()  # A Counter is a dict with default 0
         # TODO: Value Iteration
         # As the doc above indicates, this should run the valueIteration update
         # a given number of iterations; there is no output, but the values
         # should be done updating at the end.
 
+        states = mdp.getStates()
+        for _ in range(self.iterations):
+            newvalues = {}
+            for s in states:
+                value = 0
+                for a in mdp.getPossibleActions(s):
+                    sum = 0
+                    for sa, prob in mdp.getTransitionStatesAndProbs(s, a):
+                        sum += prob + (mdp.getReward(s, a, sa) + self.discount * self.values[sa])
+                    value +=  * sum
+                newvalues[s] = value
+            self.values = newvalues
 
     def getValue(self, state):
         """
@@ -54,15 +69,14 @@ class ValueIterationAgent(ValueEstimationAgent):
         """
         return self.values[state]
 
-
     def computeQValueFromValues(self, state, action):
         """
           Compute the Q-value of action in state from the
           value function stored in self.values.
         """
         # TODO: Implement this function according to the doc
+        pass
         util.raiseNotDefined()
-
 
     def computeActionFromValues(self, state):
         """
@@ -74,6 +88,7 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         # TODO: Implement according to the doc
+        pass
         util.raiseNotDefined()
 
     def getPolicy(self, state):
