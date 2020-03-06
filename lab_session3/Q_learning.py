@@ -27,7 +27,7 @@ state_size = env.observation_space.n
 
 # TODO Declare your q-table based on number of states and actions.
 
-qtable = np.zeros((state_size, action_size), dtype=float)
+qtable = np.zeros((state_size, action_size), dtype=np.float)
 
 
 class Agent(object):
@@ -46,7 +46,7 @@ class Agent(object):
         """
         self.qtable = qtable
         self.learning_rate = 0.1  # Learning rate
-        self.gamma = 0.95  # Discounting rate
+        self.gamma = 0.99  # Discounting rate
 
         # Exploration parameters
         self.epsilon = 1.0  # Exploration rate
@@ -75,7 +75,7 @@ class Agent(object):
         # TODO Write code to check if your agent wants to explore or exploit
 
         if self.epsilon >= exp_exp_tradeoff:
-            return np.random.randint(0, 4)
+            return np.random.randint(0, action_size)
         else:
             return np.argmax(self.qtable[state])
 
@@ -99,10 +99,8 @@ class Agent(object):
 
         """
         # TODO Write code to update q-table
-        maxActionNewState = np.argmax(self.qtable[new_state])
-
         self.qtable[state][action] += self.learning_rate * (
-                    reward + self.gamma * (self.qtable[new_state][maxActionNewState] - self.qtable[state][action]))
+                    reward + (self.gamma * np.max(self.qtable[new_state])) - self.qtable[state][action])
 
     def update_epsilon(self, episode):
         """
@@ -209,7 +207,7 @@ class Trainer(object):
 
 def test():
     """Function to test your agent."""
-    for episode in range(5):
+    for episode in range(15):
         state = env.reset()
         print(type(state))
         step = 0
