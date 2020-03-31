@@ -51,17 +51,19 @@ class ValueIterationAgent(ValueEstimationAgent):
         # a given number of iterations; there is no output, but the values
         # should be done updating at the end.
 
-        states = mdp.getStates()
         for _ in range(self.iterations):
             newvalues = {}
-            for s in states:
-                value = 0
-                for a in mdp.getPossibleActions(s):
-                    sum = 0
-                    for sa, prob in mdp.getTransitionStatesAndProbs(s, a):
-                        sum += prob + (mdp.getReward(s, a, sa) + self.discount * self.values[sa])
-                    value +=  * sum
-                newvalues[s] = value
+            for s in mdp.getStates():
+                if s == 'TERMINAL_STATE':
+                    newvalues[s] = 0
+                else:
+                    value = []
+                    for a in mdp.getPossibleActions(s):
+                        sum = 0
+                        for sa, prob in mdp.getTransitionStatesAndProbs(s, a):
+                            sum += prob * (mdp.getReward(s, a, sa) + self.discount * self.values[sa])
+                        value.append(sum)
+                    newvalues[s] = max(value)
             self.values = newvalues
 
     def getValue(self, state):
@@ -89,8 +91,20 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         # TODO: Implement according to the doc
-        pass
-        util.raiseNotDefined()
+        if state == 'TERMINAL_STATE':
+            return None
+        max = -10000
+        action = -1
+        for a in self.mdp.getPossibleActions(state):
+            newstates = self.mdp.getTransitionStatesAndProbs(state, a)
+            newstate = (-1, -1)
+            for sa, p in newstates:
+                if p > newstate[1]:
+                    newstate = (sa, p)
+            if max < self.values[newstate[0]]:
+                max = self.values[newstate[0]]
+                action = a
+        return action
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
