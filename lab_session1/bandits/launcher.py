@@ -70,6 +70,7 @@ def run_multiple_bandits(n_runs, **kwargs) -> (np.array, np.array):
     perfs = []
     best_actions = []
     for run in range(n_runs):
+        print("runs: ", run)
         perf, best_action = run_bandit(**kwargs)
         perfs.append(perf)
         best_actions.append(best_action)
@@ -149,11 +150,11 @@ config = {
     'q0': 1
 }
 
-n_runs = 100
-max_steps = 1000
+n_runs = 2000
+max_steps = 10000
 
 ## RUNNING =====================================================================
-kbandit = KBandit(**config)
+kbandit = KBandit_NonStat(**config)
 
 # Un-comment the one you want to use.
 launch_type = 'multiple_agents'
@@ -164,9 +165,9 @@ if launch_type == 'multiple_agents':
         Random_Agent(**config),
         EpsGreedy(**config),
         EpsGreedy_SampleAverage(**config),
-        OptimisticGreedy(**config),
-        Gradient_Bandit(**config),
-        UCB(**config)
+        # OptimisticGreedy(**config),
+        # Gradient_Bandit(**config),
+        # UCB(**config)
     ]
     perfs, best_actions = run_multiple_agents(agents, kbandit=kbandit, n_runs=n_runs, max_steps=max_steps)
     # You can change the labels, title and file_name

@@ -134,3 +134,6 @@ dmypy.json
 
 #idea
 .idea/
+
+#latex files
+out/

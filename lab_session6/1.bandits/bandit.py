@@ -7,6 +7,7 @@ We expect all classes to follow the Bandit abstract object formalism.
 # -*- coding: utf-8 -*-
 import numpy as np
 
+
 class Bandit(object):
     """
     Abstract concept of a Bandit, i.e. Slot Machine, the Agent can pull.
@@ -14,6 +15,7 @@ class Bandit(object):
     A Bandit is a distribution over reals.
     The pull() method samples from the distribution to give out a reward.
     """
+
     def __init__(self, **kwargs):
         """
         Empty for our simple one-armed bandits, without hyperparameters.
@@ -36,6 +38,7 @@ class Bandit(object):
         """
         raise NotImplementedError("Calling method pull() in Abstract class Bandit")
 
+
 class Mixture_Bandit_NonStat:
     """ A Mixture_Bandit_NonStat is a 2-component Gaussian Mixture
     reward distribution (sum of two Gaussians with weights w and 1-w in [O,1]).
@@ -44,8 +47,50 @@ class Mixture_Bandit_NonStat:
     The two weights of the gaussian mixture are selected uniformely.
     The Gaussian mixture in non-stationary: the means AND WEIGHTS move every
     time-step by an increment epsilon~N(m=0,std=0.01)"""
+
     # TODO: Implement this class inheriting the Bandit above.
-    pass
+    def __init__(self, **kwargs):
+        super(Mixture_Bandit_NonStat, self).__init__()
+        self.mean1 = 0
+        self.mean2 = 0
+        self.weight = 0.5
+        self.reset()
+
+    def reset(self):
+        self.mean1 = np.random.normal(scale=1, loc=0)
+        self.mean2 = np.random.normal(scale=1, loc=0)
+
+    def pull(self, index=0) -> float:
+        result = self.weight * np.random.normal(scale=1, loc=self.mean1) + (1 - self.weight) * np.random.normal(scale=1,
+                                                                                                                loc=self.mean1)
+        self.mean1 += np.random.normal(scale=0.01, loc=0)
+        self.mean2 += np.random.normal(scale=0.01, loc=0)
+        self.weight = np.random.uniform()
+        return result
+
+    def best_option(self, index) -> bool:
+        return True
+
+
+class Gaussian_Bandit_NonStat(Bandit):
+    # TODO: implement this class following the formalism above.
+    # Reminder: the distribution mean changes each step over time,
+    # with increments following N(m=0,std=0.01)
+    def __init__(self, **kwargs):
+        super(Gaussian_Bandit_NonStat, self).__init__()
+        self.mean = 0
+        self.reset()
+
+    def reset(self):
+        self.mean = np.random.normal(scale=1, loc=0)
+
+    def pull(self, index=0) -> float:
+        result = np.random.normal(scale=1, loc=self.mean)
+        self.mean += np.random.normal(scale=0.01, loc=0)
+        return result
+
+    def best_option(self, index) -> bool:
+        return True
 
 
 class KBandit_NonStat:
@@ -58,5 +103,28 @@ class KBandit_NonStat:
     * a reset() method to reset all Bandits
     * a pull(lever) method to pull one of the Bandits; + non stationarity
     """
-    # TODO: implement this class
-    pass
+
+    def __init__(self, k: int, **kwargs):
+        super(KBandit_NonStat, self).__init__()
+        self.Bandits = [Gaussian_Bandit_NonStat() for _ in range(k)]
+
+    def reset(self):
+        for b in self.Bandits:
+            b.reset()
+
+    def pull(self, index: int = 0) -> float:
+        for i, b in enumerate(self.Bandits):
+            temp = b.pull()
+            if i == index:
+                final = temp
+        return final
+
+    def best_option(self, i) -> bool:
+        index_best = 0
+        mean_best = float("-inf")
+        for index, b in enumerate(self.Bandits):
+            b = self.Bandits[index]
+            if (b.mean > mean_best):
+                mean_best = b.mean
+                index_best = index
+        return i == index_best

@@ -16,6 +16,7 @@ import mdp, util
 import numpy as np
 from learningAgents import ValueEstimationAgent
 
+
 class ValueIterationAgent(ValueEstimationAgent):
     """
         * Please read learningAgents.py before reading this.*
@@ -25,7 +26,8 @@ class ValueIterationAgent(ValueEstimationAgent):
         for a given number of iterations using the supplied
         discount factor.
     """
-    def __init__(self, mdp, discount = 0.9, iterations = 100):
+
+    def __init__(self, mdp, discount=0.9, iterations=100):
         """
           Your value iteration agent should take an mdp on
           construction, run the indicated number of iterations
@@ -42,13 +44,29 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.discount = discount
         print("using discount {}".format(discount))
         self.iterations = iterations
-        self.values = util.Counter() # A Counter is a dict with default 0
+        self.values = util.Counter()  # A Counter is a dict with default 0
 
         delta = 0.01
         # TODO: Implement Value Iteration.
         # Exit either when the number of iterations is reached,
         # OR until convergence (L2 distance < delta).
         # Print the number of iterations to convergence.
+        for i in range(self.iterations):
+            newvalues = {}
+            temp = self.mdp.getStates()
+            for s in self.mdp.getStates():
+                if self.mdp.isTerminal(s):
+                    newvalues[s] = 0
+                else:
+                    value = []
+                    for a in self.mdp.getPossibleActions(s):
+                        value.append(np.sum([prob * (self.mdp.getReward(s, a, sa) + self.discount * self.values[sa]) for sa, prob in self.mdp.getTransitionStatesAndProbs(s, a)]))
+                    newvalues[s] = np.max(value)
+            dist = np.linalg.norm(np.array(list(newvalues.values())) - np.array(list(self.values.values())))
+            self.values = newvalues
+            if dist < delta:
+                print('itterations : ', i)
+                break
 
     def getValue(self, state):
         """
@@ -56,14 +74,21 @@ class ValueIterationAgent(ValueEstimationAgent):
         """
         return self.values[state]
 
-
     def computeQValueFromValues(self, state, action):
         """
           Compute the Q-value of action in state from the
           value function stored in self.values.
         """
         # TODO: Implement this function according to the doc
-        util.raiseNotDefined()
+        newstates = self.mdp.getTransitionStatesAndProbs(state, action)
+        newstate = (-1, -1)
+        max = -float('Inf')
+        for sa, p in newstates:
+            if p > newstate[1]:
+                newstate = (sa, p)
+        if max < self.values[newstate[0]]:
+            max = self.values[newstate[0]]
+        return max
 
 
     def computeActionFromValues(self, state):
@@ -76,7 +101,20 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         # TODO: Implement according to the doc
-        util.raiseNotDefined()
+        if self.mdp.isTerminal(state):
+            return None
+        max = -float('Inf')
+        action = -1
+        for a in self.mdp.getPossibleActions(state):
+            newstates = self.mdp.getTransitionStatesAndProbs(state, a)
+            newstate = (-1, -1)
+            for sa, p in newstates:
+                if p > newstate[1]:
+                    newstate = (sa, p)
+            if max < self.values[newstate[0]]:
+                max = self.values[newstate[0]]
+                action = a
+        return action
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
