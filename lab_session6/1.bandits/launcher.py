@@ -12,7 +12,7 @@ from bandit import *
 
 ## FUNCTIONS ===================================================================
 
-def run_bandit(agent: Bandit_Agent, kbandit: Bandit, max_steps) -> (np.array, np.array):
+def run_bandit(agent, kbandit, max_steps) -> (np.array, np.array):
     """
     Runs a Bandit problem once. The kbandit and agent are reinitializated,
     then for max_steps, we run the bandit-agent interactions with learning.
@@ -35,19 +35,17 @@ def run_bandit(agent: Bandit_Agent, kbandit: Bandit, max_steps) -> (np.array, np
                 For computing the mean afterwards, best_action can be an array
                 of ones and zeros rather than actual booleans.
     """
-    # TODO: implement this function.
-
     agent.reset()
     kbandit.reset()
-
-    perf = np.zeros(max_steps)
-    best_action = np.zeros(max_steps)
-
-    for i in range(max_steps):
+    perf = np.empty(max_steps)
+    best_action = np.empty(max_steps)
+    for step in range(max_steps):
         action = agent.act()
-        best_action[i] = int(kbandit.best_option(action))
-        perf[i] = kbandit.pull(action)
-        agent.learn(action, perf[i])
+        reward = kbandit.pull(action)
+        agent.learn(action, reward)
+
+        perf[step] = reward
+        best_action[step] = int(action == kbandit.best_option(step))
 
     return perf, best_action
 
@@ -70,7 +68,8 @@ def run_multiple_bandits(n_runs, **kwargs) -> (np.array, np.array):
     perfs = []
     best_actions = []
     for run in range(n_runs):
-        print("runs: ", run)
+        if run % 100 == 0:
+            print(run)
         perf, best_action = run_bandit(**kwargs)
         perfs.append(perf)
         best_actions.append(best_action)
@@ -163,15 +162,12 @@ launch_type = 'multiple_agents'
 if launch_type == 'multiple_agents':
     agents = [
         Random_Agent(**config),
-        EpsGreedy(**config),
+        EpsGreedy_WeightedAverage(**config),
         EpsGreedy_SampleAverage(**config),
-        # OptimisticGreedy(**config),
-        # Gradient_Bandit(**config),
-        # UCB(**config)
     ]
     perfs, best_actions = run_multiple_agents(agents, kbandit=kbandit, n_runs=n_runs, max_steps=max_steps)
     # You can change the labels, title and file_name
-    labels = ['Random', 'EpsGreedy', 'EpsGreedySA', 'Optimistic', 'Gradient', 'UCB']
+    labels = ['Random', 'EpsGreedyWA', 'EpsGreedySA']
     file_name = 'plots/agent_comparison'
     suptitle = 'Agent comparison on k-armed-Bandit'
 

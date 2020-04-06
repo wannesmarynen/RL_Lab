@@ -4,6 +4,24 @@ import random
 
 from gym.envs.registration import register
 
+def allmax(a):
+    """ Returns all occurences of the max """
+    if len(a) == 0:
+        return []
+    all_ = [0]
+    max_ = a[0]
+    for i in range(1, len(a)):
+        if a[i] > max_:
+            all_ = [i]
+            max_ = a[i]
+        elif a[i] == max_:
+            all_.append(i)
+    return all_
+
+def my_argmax(v):
+    """ Breaks ties randomly. """
+    return random.choice(allmax(v))
+
 # code to set a gym config
 # 4x4 environment
 # kwargs = {'map_name': '4x4', 'is_slippery': False}
@@ -27,8 +45,8 @@ state_size = env.observation_space.n
 
 # TODO Declare your q-table based on number of states and actions.
 
-qtable = np.zeros((state_size, action_size), dtype=np.float)
 
+qtable = np.zeros((state_size, action_size))
 
 
 class Agent(object):
@@ -46,14 +64,14 @@ class Agent(object):
         qtable: numpy 2d-array
         """
         self.qtable = qtable
-        self.learning_rate = 0.12  # Learning rate
-        self.gamma = 0.985  # Discounting rate
+        self.learning_rate = 0.1  # Learning rate
+        self.gamma = 0.95  # Discounting rate
 
         # Exploration parameters
         self.epsilon = 1.0  # Exploration rate
         self.max_epsilon = 1.0  # Exploration probability at start
-        self.min_epsilon = 0.01  # Minimum exploration probability
-        self.decay_rate = 0.000001  # Exponential decay rate for exploration prob
+        self.min_epsilon = 0.1  # Minimum exploration probability
+        self.decay_rate = 0.00000001  # Exponential decay rate for exploration prob
 
     def act(self, state):
         """
@@ -71,11 +89,11 @@ class Agent(object):
 
 
         """
-        # TODO Write code to check if your agent wants to explore or exploit
-        if self.epsilon >= exp_exp_tradeoff:
-            return np.random.randint(0, action_size)
+
+        if np.random.rand() < self.epsilon:
+            return np.random.randint(action_size)
         else:
-            return np.argmax(self.qtable[state])
+            return my_argmax(self.qtable[state])
 
     def learn(self, state: np.int64, action: np.int64, reward: np.int64, new_state: np.int64):
         """
@@ -96,10 +114,10 @@ class Agent(object):
             new state after action
 
         """
-        # TODO Write code to update q-table
-        self.qtable[state][action] += self.learning_rate * (
-                    reward + (self.gamma * np.max(self.qtable[new_state])) - self.qtable[state][action])
 
+        self.qtable[state][action] += self.learning_rate * (
+            reward + self.gamma*np.max(self.qtable[new_state]) - self.qtable[state][action]
+        )
 
     def update_epsilon(self, episode):
         """
@@ -117,6 +135,7 @@ class Agent(object):
                        (self.max_epsilon - self.min_epsilon) * \
                        np.exp(-self.decay_rate * episode)
 
+
 class Trainer(object):
     """Class to train the agent."""
 
@@ -133,13 +152,13 @@ class Trainer(object):
 
         """
         # config of your run.
-        self.total_episodes = 20000  # Total episodes
-        self.max_steps = 200  # Max steps per episode
-
+        self.total_episodes = 200000  # Total episodes
+        self.max_steps = 2000  # Max steps per episode
 
         # q-table
         self.qtable = qtable
         self.agent = Agent(self.qtable)
+
     def run(self):
         """
         Function to run the environment.
@@ -247,4 +266,12 @@ if __name__ == '__main__':
         print(np.argmax(qtable, axis=1).reshape(4, 4))
     elif kwargs['map_name'] == '8x8':
         print(np.argmax(qtable, axis=1).reshape(8, 8))
+
+    trainer = Trainer(qtable)
+
+    # train your agent
+    qtable = trainer.run()
+
+    # reset environment and test
+    env.reset()
     test()
